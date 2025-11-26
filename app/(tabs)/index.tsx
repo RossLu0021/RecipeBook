@@ -1,98 +1,219 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+  Text,
+} from "react-native";
+import { useEffect, useState, useCallback } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack, router, useFocusEffect } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import type { Recipe } from "@/types/recipe";
+import RecipeCard from "@/components/recipe/recipeCard";
+import { supabase } from "@/supabase/client";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
-export default function HomeScreen() {
+export default function RecipesScreen() {
+  const scheme = useColorScheme() ?? "light";
+  const theme = Colors[scheme];
+
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Adding 'void' fixes the "Promise returned is ignored" warning
+      void loadRecipes();
+    }, []),
+  );
+
+  // Filter logic whenever search query or recipes change
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredRecipes(recipes);
+    } else {
+      const lowerQuery = searchQuery.toLowerCase();
+      const filtered = recipes.filter(
+        (recipe) =>
+          recipe.title.toLowerCase().includes(lowerQuery) ||
+          recipe.meal_type?.toLowerCase().includes(lowerQuery) ||
+          recipe.cuisine?.toLowerCase().includes(lowerQuery),
+      );
+      setFilteredRecipes(filtered);
+    }
+  }, [searchQuery, recipes]);
+
+  async function loadRecipes() {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("recipes")
+      .select("*, photos:recipe_photos(photo_url)")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn("Failed to load recipes:", error.message);
+    } else {
+      setRecipes(data as Recipe[]);
+      setFilteredRecipes(data as Recipe[]); // Initialize filtered list
+    }
+    setLoading(false);
+  }
+
+  const handleNewRecipe = () => {
+    router.push("/recipes/create");
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: theme.background }]}
+    >
+      <Stack.Screen
+        options={{
+          headerTitle: "My Recipes",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={handleNewRecipe}
+              style={styles.headerRightBtn}
+            >
+              <Ionicons name="add" size={28} color={theme.tint} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={styles.container}>
+        {/* SEARCH BAR */}
+        <View
+          style={[
+            styles.searchContainer,
+            { backgroundColor: theme.card, borderColor: theme.cardBorder },
+          ]}
+        >
+          <Ionicons
+            name="search"
+            size={20}
+            color={theme.mutedText}
+            style={styles.searchIcon}
+          />
+          <TextInput
+            placeholder="Search recipes (e.g. Pasta, Dinner)..."
+            placeholderTextColor={theme.mutedText}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={[styles.searchInput, { color: theme.text }]}
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <Ionicons name="close-circle" size={20} color={theme.mutedText} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={theme.tint} />
+          </View>
+        ) : (
+          <FlatList
+            data={filteredRecipes} // Using the filtered state
+            keyExtractor={(item) => String(item.id)}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => <RecipeCard recipe={item} />}
+            contentContainerStyle={styles.listContent}
+            ListEmptyComponent={
+              <View style={styles.center}>
+                <Ionicons
+                  name="book-outline"
+                  size={60}
+                  color={theme.mutedText}
+                />
+                <View style={styles.emptySpacer} />
+                <Text style={[styles.emptyText, { color: theme.mutedText }]}>
+                  {searchQuery ? "No recipes found." : "No recipes yet."}
+                </Text>
+              </View>
+            }
+          />
+        )}
+      </View>
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: theme.tint }]}
+        onPress={handleNewRecipe}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="add" size={32} color="white" />
+      </TouchableOpacity>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  safeArea: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  headerRightBtn: {
+    marginRight: 10,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  listContent: {
+    paddingBottom: 100,
+    gap: 16,
+  },
+  emptySpacer: {
+    height: 10,
+  },
+  emptyText: {
+    fontSize: 16,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
 });
