@@ -84,7 +84,9 @@ export default function RecipesScreen() {
     setLoading(true);
     const { data, error } = await supabase
       .from("recipes")
-      .select("*, photos:recipe_photos(photo_url), ingredients:recipe_ingredients(*)") // Fetch ingredients for matching
+      .select(
+        "*, photos:recipe_photos(photo_url), ingredients:recipe_ingredients(*)",
+      ) // Fetch ingredients for matching
       .order("created_at", { ascending: false });
 
     if (error) {

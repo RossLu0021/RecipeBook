@@ -74,14 +74,17 @@ export default function useGroceryList() {
     onSuccess: (newItem) => {
       // Replace the optimistic item with the real one
       queryClient.setQueryData(["grocery_list"], (old: GroceryItem[] = []) => {
-        // We can just prepend the new item and let the next refetch clean up, 
-        // OR we could try to replace the temp one. 
+        // We can just prepend the new item and let the next refetch clean up,
+        // OR we could try to replace the temp one.
         // Since we don't know the temp ID here easily without passing it through context,
-        // simpler is to just put the real one in. 
+        // simpler is to just put the real one in.
         // Actually, standard pattern is to replace the whole list or let invalidation handle it.
         // But invalidation needs network.
         // Let's just update the cache with the real item.
-        return [newItem, ...old.filter(i => i.id !== newItem.id && !i.id.startsWith("0."))];
+        return [
+          newItem,
+          ...old.filter((i) => i.id !== newItem.id && !i.id.startsWith("0.")),
+        ];
         // Note: Math.random() starts with "0.". This is a bit hacky but works for simple cases.
         // Better: just rely on invalidation if online, but we want offline support.
         // If we are offline, onSuccess won't fire until we are back online.

@@ -26,7 +26,8 @@ export default function TabLayout() {
             iconName = focused ? "cart" : "cart-outline";
           } else if (route.name === "profile") {
             iconName = focused ? "person" : "person-outline";
-          } else if (route.name === "pantry") { // Added logic for pantry icon
+          } else if (route.name === "pantry") {
+            // Added logic for pantry icon
             iconName = focused ? "cube" : "cube-outline"; // Using Ionicons for consistency
           }
 

@@ -9,9 +9,5 @@ export function HelloWave() {
     animationDuration: "300ms",
   } as const;
 
-  return (
-    <Animated.Text style={[styles.text, animatedStyle]}>
-      👋
-    </Animated.Text>
-  );
+  return <Animated.Text style={[styles.text, animatedStyle]}>👋</Animated.Text>;
 }

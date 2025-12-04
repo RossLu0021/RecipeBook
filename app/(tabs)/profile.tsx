@@ -27,7 +27,9 @@ const AvatarView = ({ profile, uploading, isEditing, onPick, theme }: any) => (
       <View>
         {profile?.avatar_url ? (
           <Image
-            source={{ uri: `${profile.avatar_url}?t = ${new Date().getTime()} ` }}
+            source={{
+              uri: `${profile.avatar_url}?t = ${new Date().getTime()} `,
+            }}
             style={styles.avatar}
           />
         ) : (
@@ -163,7 +165,9 @@ export default function ProfileScreen() {
       };
 
       const json = JSON.stringify(backupData, null, 2);
-      const fileUri = (FileSystem.documentDirectory || FileSystem.cacheDirectory) + "recipebook_backup.json";
+      const fileUri =
+        (FileSystem.documentDirectory || FileSystem.cacheDirectory) +
+        "recipebook_backup.json";
 
       await FileSystem.writeAsStringAsync(fileUri, json);
 

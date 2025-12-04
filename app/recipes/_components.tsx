@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
-// --- Property Row Component ---
+// Property Row Component
 export const PropertyRow = ({ icon, label, value, theme }: any) => (
   <View style={styles.propRow}>
     <View style={styles.rowCenter}>
@@ -19,7 +19,7 @@ export const PropertyRow = ({ icon, label, value, theme }: any) => (
   </View>
 );
 
-// --- Macro Summary Component ---
+// Macro Summary Component
 export const MacroSummary = ({ recipe, theme }: any) => (
   <View style={styles.mb20}>
     <Text style={[styles.macroHeader, { color: theme.mutedText }]}>
@@ -35,7 +35,7 @@ export const MacroSummary = ({ recipe, theme }: any) => (
   </View>
 );
 
-// --- Ingredients List Component ---
+// Ingredients List Component
 export const IngredientList = ({ ingredients, theme }: any) => (
   <View
     style={[
@@ -68,7 +68,7 @@ export const IngredientList = ({ ingredients, theme }: any) => (
   </View>
 );
 
-// --- Instructions List Component ---
+// Instructions List Component
 export const InstructionList = ({ steps, theme }: any) => (
   <View style={styles.stepContainer}>
     {steps?.length > 0 ? (
@@ -124,6 +124,6 @@ const styles = StyleSheet.create({
   stepText: { flex: 1, fontSize: 16, lineHeight: 24 },
   borderBottom: {
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(150,150,150,0.1)", // Assuming theme.divider maps to this or similar
+    borderBottomColor: "rgba(150,150,150,0.1)",
   },
 });

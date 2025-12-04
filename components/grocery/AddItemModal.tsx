@@ -155,9 +155,7 @@ export default function AddItemModal({
                       },
                     ]}
                   >
-                    <Text style={[styles.categoryText, textStyle]}>
-                      {cat}
-                    </Text>
+                    <Text style={[styles.categoryText, textStyle]}>{cat}</Text>
                   </TouchableOpacity>
                 );
               })}

@@ -1,24 +1,24 @@
 import * as Print from "expo-print";
 
 export const generateRecipePDF = async (recipe: any) => {
-    const ingredientsHtml = recipe.recipe_ingredients
-        .map(
-            (ing: any) =>
-                `<li>${ing.quantity || ""} ${ing.unit || ""} ${ing.name}</li>`,
-        )
-        .join("");
+  const ingredientsHtml = recipe.recipe_ingredients
+    .map(
+      (ing: any) =>
+        `<li>${ing.quantity || ""} ${ing.unit || ""} ${ing.name}</li>`,
+    )
+    .join("");
 
-    const stepsHtml = recipe.recipe_steps
-        .map(
-            (step: any) =>
-                `<div class="step">
+  const stepsHtml = recipe.recipe_steps
+    .map(
+      (step: any) =>
+        `<div class="step">
           <h3>Step ${step.step_number}</h3>
           <p>${step.description}</p>
         </div>`,
-        )
-        .join("");
+    )
+    .join("");
 
-    const html = `
+  const html = `
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
@@ -53,6 +53,6 @@ export const generateRecipePDF = async (recipe: any) => {
     </html>
   `;
 
-    const { uri } = await Print.printToFileAsync({ html });
-    return uri;
+  const { uri } = await Print.printToFileAsync({ html });
+  return uri;
 };
