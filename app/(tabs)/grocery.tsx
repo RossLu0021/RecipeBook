@@ -1,19 +1,19 @@
-import {
-  Share,
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import AddItemModal from "@/components/grocery/AddItemModal";
 import CategorySection from "@/components/grocery/CategorySection";
-import { useState } from "react";
+import { Colors, Typography } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import useGroceryList from "@/hooks/useGroceryList";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function GroceryTab() {
   const scheme = useColorScheme() ?? "light";
@@ -71,63 +71,81 @@ export default function GroceryTab() {
       style={[styles.safe, { backgroundColor: theme.background }]}
       edges={["top", "left", "right"]}
     >
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: theme.text }]}>
-            Grocery List
-          </Text>
+      <FlatList
+        data={Object.keys(groupedList)}
+        keyExtractor={(item) => item}
+        contentContainerStyle={styles.container}
+        ListHeaderComponent={
+          <View style={styles.headerRow}>
+            <Text style={[styles.title, { color: theme.text }]}>
+              Grocery List
+            </Text>
 
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={clearChecked}>
-              <Text style={styles.clearButton}>Clear Done</Text>
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                onPress={clearChecked}
+                accessibilityRole="button"
+                accessibilityLabel="Clear checked items"
+                accessibilityHint="Removes all items marked as done from your list"
+              >
+                <Text style={styles.clearButton}>Clear Done</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity onPress={exportList}>
-              <Text style={[styles.exportButton, { color: theme.tint }]}>
-                Export
+              <TouchableOpacity
+                onPress={exportList}
+                accessibilityRole="button"
+                accessibilityLabel="Export grocery list"
+                accessibilityHint="Shares your grocery list as text"
+              >
+                <Text style={[styles.exportButton, { color: theme.tint }]}>
+                  Export
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="large" color={theme.tint} />
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyText, { color: theme.icon }]}>
+                Your grocery list is empty.
               </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {loading && Object.keys(groupedList).length === 0 ? (
-          <View style={styles.emptyState}>
-            <ActivityIndicator size="large" color={theme.tint} />
-          </View>
-        ) : Object.keys(groupedList).length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={{ color: theme.icon, fontSize: 16 }}>
-              Your grocery list is empty.
-            </Text>
-            <Text style={[styles.emptySubText, { color: theme.icon }]}>
-              Add meals or add items manually.
-            </Text>
-          </View>
-        ) : (
-          Object.keys(groupedList).map((category) => (
-            <CategorySection
-              key={category}
-              category={category}
-              items={groupedList[category]}
-              onToggle={handleToggle} // Pass our wrapper function
-              onDelete={removeItem}
-              onAddPress={() => setModalVisible(true)}
-            />
-          ))
+              <Text style={[styles.emptySubText, { color: theme.icon }]}>
+                Add meals or add items manually.
+              </Text>
+            </View>
+          )
+        }
+        renderItem={({ item: category }) => (
+          <CategorySection
+            category={category}
+            items={groupedList[category]}
+            onToggle={handleToggle}
+            onDelete={removeItem}
+            onAddPress={() => setModalVisible(true)}
+          />
         )}
-
-        <TouchableOpacity
-          style={[
-            styles.addMainButton,
-            { borderColor: theme.icon, backgroundColor: theme.card },
-          ]}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={[styles.addMainText, { color: theme.tint }]}>
-            + Add Item
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+        ListFooterComponent={
+          <TouchableOpacity
+            style={[
+              styles.addMainButton,
+              { borderColor: theme.icon, backgroundColor: theme.card },
+            ]}
+            onPress={() => setModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Add new item"
+            accessibilityHint="Opens a modal to add a new grocery item"
+          >
+            <Text style={[styles.addMainText, { color: theme.tint }]}>
+              + Add Item
+            </Text>
+          </TouchableOpacity>
+        }
+      />
 
       <AddItemModal
         visible={modalVisible}
@@ -153,36 +171,71 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 16,
   },
-  title: { fontSize: 30, fontWeight: "700" },
-  clearButton: {
-    color: "#ef4444",
-    fontWeight: "600",
-    fontSize: 16,
+  title: {
+    ...Typography.heading,
+    marginBottom: 4,
   },
-  exportButton: {
-    fontWeight: "600",
-    fontSize: 16,
+  subtitle: {
+    ...Typography.body,
+    marginBottom: 24,
   },
-
   emptyState: {
-    marginTop: 20,
-    marginBottom: 40,
     alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 60,
+  },
+  emptyText: {
+    ...Typography.subtitle,
+    marginBottom: 8,
   },
   emptySubText: {
-    marginTop: 4,
-    fontSize: 16,
+    ...Typography.body,
   },
-
-  addMainButton: {
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderRadius: 12,
-    marginTop: 24,
+  sectionHeader: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    ...Typography.subtitle,
+    fontSize: 14, // Override size for section header if needed, or keep subtitle size
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  itemRow: {
+    flexDirection: "row",
     alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  itemText: {
+    ...Typography.body,
+    flex: 1,
+    marginLeft: 12,
+  },
+  itemTextChecked: {
+    textDecorationLine: "line-through",
+    opacity: 0.6,
+  },
+  addMainButton: {
+    margin: 20,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
   },
   addMainText: {
-    fontSize: 16,
+    ...Typography.subtitle,
+  },
+  clearButton: {
+    ...Typography.caption,
+    color: "#ef4444",
+  },
+  exportButton: {
+    ...Typography.caption,
     fontWeight: "600",
   },
 });

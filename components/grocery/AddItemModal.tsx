@@ -1,17 +1,17 @@
-import {
-  View,
-  Text,
-  Modal,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Keyboard,
-} from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useState, useEffect } from "react";
 import { GROCERY_CATEGORIES, inferCategory } from "@/utils/groceryUtils"; // Make sure to import this
+import { useEffect, useState } from "react";
+import {
+  Keyboard,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function AddItemModal({
   visible,
@@ -35,7 +35,7 @@ export default function AddItemModal({
   const [unit, setUnit] = useState("");
   const [category, setCategory] = useState("Other"); // Default to Other
 
-  // 🧠 CLEVER LOGIC: Auto-predict category when name changes
+  // Auto-predict category when name changes
   useEffect(() => {
     if (name.length > 2) {
       const predicted = inferCategory(name);
@@ -128,14 +128,18 @@ export default function AddItemModal({
           <Text style={[styles.label, { color: theme.mutedText }]}>
             Category: {category}
           </Text>
-          <View style={{ height: 50, marginBottom: 12 }}>
+          <View style={styles.categoryContainer}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 8 }}
+              contentContainerStyle={styles.categoryScroll}
             >
               {GROCERY_CATEGORIES.map((cat) => {
                 const isSelected = category === cat;
+                const textStyle = {
+                  color: isSelected ? "#fff" : theme.text,
+                  fontWeight: isSelected ? "600" : "400",
+                } as const;
                 return (
                   <TouchableOpacity
                     key={cat}
@@ -151,13 +155,7 @@ export default function AddItemModal({
                       },
                     ]}
                   >
-                    <Text
-                      style={{
-                        color: isSelected ? "#fff" : theme.text,
-                        fontWeight: isSelected ? "600" : "400",
-                        fontSize: 13,
-                      }}
-                    >
+                    <Text style={[styles.categoryText, textStyle]}>
                       {cat}
                     </Text>
                   </TouchableOpacity>
@@ -179,9 +177,7 @@ export default function AddItemModal({
               onPress={submit}
               style={[styles.button, { backgroundColor: theme.tint }]}
             >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                Save Item
-              </Text>
+              <Text style={styles.saveText}>Save Item</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -256,4 +252,8 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: "transparent",
   },
+  categoryContainer: { height: 50, marginBottom: 12 },
+  categoryScroll: { gap: 8 },
+  categoryText: { fontSize: 13 },
+  saveText: { color: "#fff", fontWeight: "bold" },
 });

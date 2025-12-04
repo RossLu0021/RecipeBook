@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/supabase/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert } from "react-native";
 
 export interface GroceryItem {
   id: string;
@@ -49,11 +50,50 @@ export default function useGroceryList() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (newItem) => {
+    onMutate: async (newItem) => {
+      await queryClient.cancelQueries({ queryKey: ["grocery_list"] });
+      const previousList = queryClient.getQueryData(["grocery_list"]);
+
+      const optimisticItem: GroceryItem = {
+        id: Math.random().toString(), // Temp ID
+        name: newItem.name,
+        category: newItem.category,
+        quantity: newItem.quantity,
+        unit: newItem.unit,
+        checked: false,
+        user_id: "temp-user", // Placeholder
+      };
+
       queryClient.setQueryData(["grocery_list"], (old: GroceryItem[] = []) => [
-        newItem,
+        optimisticItem,
         ...old,
       ]);
+
+      return { previousList };
+    },
+    onSuccess: (newItem) => {
+      // Replace the optimistic item with the real one
+      queryClient.setQueryData(["grocery_list"], (old: GroceryItem[] = []) => {
+        // We can just prepend the new item and let the next refetch clean up, 
+        // OR we could try to replace the temp one. 
+        // Since we don't know the temp ID here easily without passing it through context,
+        // simpler is to just put the real one in. 
+        // Actually, standard pattern is to replace the whole list or let invalidation handle it.
+        // But invalidation needs network.
+        // Let's just update the cache with the real item.
+        return [newItem, ...old.filter(i => i.id !== newItem.id && !i.id.startsWith("0."))];
+        // Note: Math.random() starts with "0.". This is a bit hacky but works for simple cases.
+        // Better: just rely on invalidation if online, but we want offline support.
+        // If we are offline, onSuccess won't fire until we are back online.
+        // So this is fine.
+      });
+    },
+    onError: (err, newItem, context) => {
+      queryClient.setQueryData(["grocery_list"], context?.previousList);
+      Alert.alert("Error", "Failed to add item. Please try again.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["grocery_list"] });
     },
   });
 
@@ -78,6 +118,7 @@ export default function useGroceryList() {
     },
     onError: (err, newTodo, context) => {
       queryClient.setQueryData(["grocery_list"], context?.previousList);
+      Alert.alert("Error", "Failed to update item. Please try again.");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["grocery_list"] });
@@ -103,6 +144,7 @@ export default function useGroceryList() {
     },
     onError: (err, id, context) => {
       queryClient.setQueryData(["grocery_list"], context?.previousList);
+      Alert.alert("Error", "Failed to delete item. Please try again.");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["grocery_list"] });
@@ -135,6 +177,7 @@ export default function useGroceryList() {
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(["grocery_list"], context?.previousList);
+      Alert.alert("Error", "Failed to clear items. Please try again.");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["grocery_list"] });

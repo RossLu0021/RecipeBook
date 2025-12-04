@@ -1,14 +1,8 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Swipeable } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
 export type IngredientItemProps = {
   id: string;
@@ -56,7 +50,8 @@ export default function IngredientItem({
         <Text
           style={[
             styles.text,
-            { color: theme.text, opacity: checked ? 0.4 : 1 },
+            { color: theme.text },
+            checked && styles.checkedItem,
           ]}
         >
           {quantity ? `${quantity} ` : ""}
@@ -95,5 +90,8 @@ const styles = StyleSheet.create({
     width: 70,
     borderRadius: 10,
     marginVertical: 4,
+  },
+  checkedItem: {
+    opacity: 0.4,
   },
 });

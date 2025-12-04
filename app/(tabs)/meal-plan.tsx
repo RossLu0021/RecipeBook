@@ -1,18 +1,18 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import PillSelector from "@/components/recipe/pillSelector";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useState } from "react";
-import PillSelector from "@/components/recipe/pillSelector";
-import { router } from "expo-router";
+import { MealPlanItem, useMealPlanQuery } from "@/hooks/useMealPlanQuery";
 import { Ionicons } from "@expo/vector-icons";
-import { useMealPlanQuery, MealPlanItem } from "@/hooks/useMealPlanQuery";
+import { router } from "expo-router";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MealPlanTab() {
   const scheme = useColorScheme() ?? "light";
@@ -41,7 +41,7 @@ export default function MealPlanTab() {
         >
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: theme.text }]}>
-              {/* ✅ avoids eslint unescaped-entities */}
+              {/* avoids eslint unescaped-entities */}
               {`${selectedDay}\u2019s Menu`}
             </Text>
 

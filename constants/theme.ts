@@ -116,3 +116,28 @@ export const Fonts = Platform.select({
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });
+
+export const Typography = {
+  heading: {
+    fontFamily: "Inter_800ExtraBold",
+    fontSize: 32,
+  },
+  title: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 24,
+  },
+  subtitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 20,
+  },
+  body: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  caption: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#6b7280",
+  },
+};

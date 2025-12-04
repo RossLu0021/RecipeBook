@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet } from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { memo } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
-export default function StepList({
+const StepList = memo(function StepList({
   steps,
 }: {
   steps: { step_number: number; instruction: string }[];
@@ -12,7 +13,7 @@ export default function StepList({
 
   if (!steps || steps.length === 0) {
     return (
-      <Text style={{ color: theme.mutedText, fontStyle: "italic" }}>
+      <Text style={[styles.emptyText, { color: theme.mutedText }]}>
         No instructions added yet.
       </Text>
     );
@@ -32,12 +33,15 @@ export default function StepList({
       ))}
     </View>
   );
-}
+});
+
+export default StepList;
 
 const styles = StyleSheet.create({
   container: {
     marginTop: 4,
   },
+  emptyText: { fontStyle: "italic" },
   stepRow: {
     flexDirection: "row",
     alignItems: "flex-start",

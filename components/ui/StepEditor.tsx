@@ -1,12 +1,12 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import {
-  View,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
+  View,
 } from "react-native";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function StepEditor({
   steps,
@@ -31,7 +31,7 @@ export default function StepEditor({
   }
 
   return (
-    <View style={{ marginTop: 30 }}>
+    <View style={styles.container}>
       <Text style={[styles.sectionTitle, { color: theme.text }]}>
         Instructions
       </Text>
@@ -64,13 +64,15 @@ export default function StepEditor({
         onPress={addStep}
         style={[styles.addButton, { borderColor: theme.cardBorder }]}
       >
-        <Text style={{ color: theme.tint, fontWeight: "600" }}>+ Add Step</Text>
+        <Text style={[styles.addText, { color: theme.tint }]}>+ Add Step</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { marginTop: 30 },
+  addText: { fontWeight: "600" },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "700",

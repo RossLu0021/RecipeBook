@@ -52,11 +52,11 @@ export default function ParallaxScrollView({
   });
 
   return (
-    <View style={{ flex: 1, backgroundColor }}>
+    <View style={[styles.container, { backgroundColor }]}>
       <Animated.ScrollView
         ref={scrollRef}
         scrollEventThrottle={16}
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* HEADER */}
         <Animated.View
@@ -77,6 +77,8 @@ export default function ParallaxScrollView({
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
   header: {
     height: HEADER_HEIGHT,
     overflow: "hidden",

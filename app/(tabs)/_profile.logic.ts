@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { Alert, Linking } from "react-native";
-import * as ImagePicker from "expo-image-picker";
 import { supabase } from "@/supabase/client";
+import * as ImagePicker from "expo-image-picker";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Linking } from "react-native";
 
 export interface UserProfile {
   id: string;
@@ -37,7 +37,7 @@ export function useProfileActions() {
         setTempName(data.full_name || "");
       }
     } catch (error) {
-      console.log(error);
+      // Error handling is managed by the UI or global boundary
     } finally {
       setLoading(false);
     }

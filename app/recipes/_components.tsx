@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { StyleSheet, Text, View } from "react-native";
 
 // --- Property Row Component ---
 export const PropertyRow = ({ icon, label, value, theme }: any) => (
@@ -49,10 +49,7 @@ export const IngredientList = ({ ingredients, theme }: any) => (
           key={ing.id}
           style={[
             styles.ingredientRow,
-            i !== ingredients.length - 1 && {
-              borderBottomWidth: 1,
-              borderBottomColor: theme.divider,
-            },
+            i !== ingredients.length - 1 && styles.borderBottom,
           ]}
         >
           <Text style={[styles.ingName, { color: theme.text }]}>
@@ -125,4 +122,8 @@ const styles = StyleSheet.create({
   stepRow: { flexDirection: "row" },
   stepNum: { fontSize: 16, fontWeight: "600", width: 24, marginTop: 2 },
   stepText: { flex: 1, fontSize: 16, lineHeight: 24 },
+  borderBottom: {
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(150,150,150,0.1)", // Assuming theme.divider maps to this or similar
+  },
 });

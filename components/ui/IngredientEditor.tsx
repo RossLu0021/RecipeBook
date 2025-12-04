@@ -1,18 +1,18 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  FlatList,
-  Pressable,
-  Keyboard,
-} from "react-native";
+import IngredientRow from "@/components/recipe/IngredientRow";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useState } from "react";
 import { IngredientInput } from "@/types/recipe";
-import IngredientRow from "@/components/recipe/IngredientRow";
+import { useState } from "react";
+import {
+  FlatList,
+  Keyboard,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 // --- OPTIONS ---
 const QUANTITIES = [
@@ -148,7 +148,7 @@ export default function IngredientEditor({
         onPress={addIngredient}
         style={[styles.addButton, { borderColor: theme.cardBorder }]}
       >
-        <Text style={{ color: theme.tint, fontWeight: "600" }}>
+        <Text style={[styles.addText, { color: theme.tint }]}>
           + Add Ingredient
         </Text>
       </TouchableOpacity>
@@ -167,7 +167,7 @@ export default function IngredientEditor({
               data={getOptions()}
               keyExtractor={(item) => item}
               numColumns={3}
-              columnWrapperStyle={{ gap: 10 }}
+              columnWrapperStyle={styles.columnWrapper}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -177,7 +177,7 @@ export default function IngredientEditor({
                   ]}
                   onPress={() => handleSelection(item)}
                 >
-                  <Text style={{ color: theme.text, fontSize: 16 }}>
+                  <Text style={[styles.optionText, { color: theme.text }]}>
                     {item}
                   </Text>
                 </TouchableOpacity>
@@ -239,4 +239,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 10,
   },
+  addText: { fontWeight: "600" },
+  columnWrapper: { gap: 10 },
+  optionText: { fontSize: 16 },
 });

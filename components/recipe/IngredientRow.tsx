@@ -1,14 +1,14 @@
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Text,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IngredientInput } from "@/types/recipe";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 type Props = {
   item: IngredientInput;
@@ -34,17 +34,17 @@ export default function IngredientRow({
         style={styles.pill}
         onPress={() => onOpenSelector(item.id, "quantity")}
       >
-        <Text style={{ color: theme.text, fontWeight: "600", fontSize: 14 }}>
+        <Text style={[styles.pillText, { color: theme.text }]}>
           {item.quantity || "1"}
         </Text>
       </TouchableOpacity>
 
       {/* 2. Unit Pill */}
       <TouchableOpacity
-        style={[styles.pill, { marginRight: 8, minWidth: 50 }]}
+        style={[styles.pill, styles.unitPill]}
         onPress={() => onOpenSelector(item.id, "unit")}
       >
-        <Text style={{ color: theme.text, fontSize: 14 }}>
+        <Text style={[styles.unitText, { color: theme.text }]}>
           {item.unit || "-"}
         </Text>
       </TouchableOpacity>
@@ -104,4 +104,7 @@ const styles = StyleSheet.create({
   removeButton: {
     padding: 4,
   },
+  pillText: { fontWeight: "600", fontSize: 14 },
+  unitPill: { marginRight: 8, minWidth: 50 },
+  unitText: { fontSize: 14 },
 });

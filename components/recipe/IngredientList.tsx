@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet } from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { memo } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
-export default function IngredientList({
+const IngredientList = memo(function IngredientList({
   ingredients,
 }: {
   ingredients: {
@@ -15,9 +16,9 @@ export default function IngredientList({
   const theme = Colors[scheme];
 
   return (
-    <View style={{ marginTop: 8 }}>
+    <View style={styles.container}>
       {ingredients.length === 0 && (
-        <Text style={{ color: theme.mutedText, fontStyle: "italic" }}>
+        <Text style={[styles.emptyText, { color: theme.mutedText }]}>
           No ingredients listed.
         </Text>
       )}
@@ -34,9 +35,13 @@ export default function IngredientList({
       ))}
     </View>
   );
-}
+});
+
+export default IngredientList;
 
 const styles = StyleSheet.create({
+  container: { marginTop: 8 },
+  emptyText: { fontStyle: "italic" },
   row: {
     flexDirection: "row",
     alignItems: "center",

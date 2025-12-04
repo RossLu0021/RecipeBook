@@ -3,6 +3,7 @@
 An Expo Router app for saving recipes, planning meals, building grocery lists, and managing your profile with Supabase auth and storage.
 
 ## Features
+
 - Create and browse recipes with photo uploads.
 - Plan meals for each day and jump into recipe details.
 - Build a grouped grocery list, check off items, clear completed, and export/share.
@@ -10,25 +11,43 @@ An Expo Router app for saving recipes, planning meals, building grocery lists, a
 - React Query with persisted cache for fast, offline-friendly reads.
 
 ## Getting Started
-1) Install dependencies
+
+1. Install dependencies
+
 ```bash
 npm install
 ```
 
-2) Configure Supabase env vars (required for auth/storage)
-Create a `.env` file (or use `app.config.ts`/`app.json`) with:
+2. Configure Supabase env vars (required for auth/storage)
+   Create a `.env` file (or use `app.config.ts`/`app.json`) with:
+
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=<your-supabase-url>
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 ```
 
-3) Run the app
+3. Run the app
+
 ```bash
 npx expo start
 ```
+
 Open on a device/emulator via the QR code or Expo Go.
 
+## Seed Demo Data
+
+- Requires a Supabase service role key (bypasses RLS) and your project URL.
+- Environment: set `EXPO_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Optional: `DEMO_EMAIL`, `DEMO_PASSWORD` (defaults: demo@recipebook.test / demo1234).
+- Run seeding:
+
+```bash
+npm run seed:demo
+```
+
+- Use the demo credentials to log in and see recipes, meal plan entries, and a prefilled grocery list.
+
 ## Project Notes
+
 - File-based routing lives under `app/` (tabs for recipes, meal plan, grocery, profile).
 - Supabase client is configured in `supabase/client.ts` and expects the env vars above.
 - Grocery and meal plan data use TanStack Query with AsyncStorage persistence for smoother reloads.

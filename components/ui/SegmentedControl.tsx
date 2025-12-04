@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function SegmentedControl({
   options,
@@ -18,6 +18,7 @@ export default function SegmentedControl({
     <View style={[styles.container, { borderColor: theme.cardBorder }]}>
       {options.map((option) => {
         const active = option === selected;
+        const textStyle = { color: active ? "#FFF" : theme.text };
 
         return (
           <TouchableOpacity
@@ -25,11 +26,7 @@ export default function SegmentedControl({
             style={[styles.item, active && { backgroundColor: theme.tint }]}
             onPress={() => onChange(option)}
           >
-            <Text
-              style={[styles.label, { color: active ? "#FFF" : theme.text }]}
-            >
-              {option}
-            </Text>
+            <Text style={[styles.label, textStyle]}>{option}</Text>
           </TouchableOpacity>
         );
       })}

@@ -1,6 +1,6 @@
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Ionicons } from "@expo/vector-icons";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
@@ -26,16 +26,56 @@ export default function TabLayout() {
             iconName = focused ? "cart" : "cart-outline";
           } else if (route.name === "profile") {
             iconName = focused ? "person" : "person-outline";
+          } else if (route.name === "pantry") { // Added logic for pantry icon
+            iconName = focused ? "cube" : "cube-outline"; // Using Ionicons for consistency
           }
 
+          // This global tabBarIcon will be overridden by specific tabBarIcon in Tabs.Screen options if present
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
       <Tabs.Screen name="index" options={{ title: "Recipes" }} />
       <Tabs.Screen name="meal-plan" options={{ title: "Meal Plan" }} />
-      <Tabs.Screen name="grocery" options={{ title: "Grocery" }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+      <Tabs.Screen
+        name="pantry"
+        options={{
+          title: "Pantry",
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons
+              name="cupboard-outline"
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="grocery"
+        options={{
+          title: "Grocery",
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons
+              name="cart-outline"
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons
+              name="account-outline"
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

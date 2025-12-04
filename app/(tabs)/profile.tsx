@@ -1,22 +1,25 @@
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { supabase } from "@/supabase/client";
+import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
+import { useState } from "react";
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
-  TextInput,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Ionicons } from "@expo/vector-icons";
 
-import { useProfileActions, UserProfile } from "./profile.logic";
+import { useProfileActions } from "./_profile.logic";
 
 const AvatarView = ({ profile, uploading, isEditing, onPick, theme }: any) => (
   <View style={styles.avatarSection}>
@@ -24,7 +27,7 @@ const AvatarView = ({ profile, uploading, isEditing, onPick, theme }: any) => (
       <View>
         {profile?.avatar_url ? (
           <Image
-            source={{ uri: `${profile.avatar_url}?t=${new Date().getTime()}` }}
+            source={{ uri: `${profile.avatar_url}?t = ${new Date().getTime()} ` }}
             style={styles.avatar}
           />
         ) : (
@@ -136,6 +139,47 @@ export default function ProfileScreen() {
     updateProfile(() => setIsEditing(false));
   };
 
+  const handleBackup = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) return;
+      const userId = userData.user.id;
+
+      // Fetch all data
+      const [recipes, pantry, grocery, mealPlan] = await Promise.all([
+        supabase.from("recipes").select("*").eq("user_id", userId),
+        supabase.from("pantry_items").select("*").eq("user_id", userId),
+        supabase.from("grocery_list").select("*").eq("user_id", userId),
+        supabase.from("meal_plan").select("*").eq("user_id", userId),
+      ]);
+
+      const backupData = {
+        timestamp: new Date().toISOString(),
+        user_id: userId,
+        recipes: recipes.data || [],
+        pantry: pantry.data || [],
+        grocery: grocery.data || [],
+        meal_plan: mealPlan.data || [],
+      };
+
+      const json = JSON.stringify(backupData, null, 2);
+      const fileUri = (FileSystem.documentDirectory || FileSystem.cacheDirectory) + "recipebook_backup.json";
+
+      await FileSystem.writeAsStringAsync(fileUri, json);
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          UTI: "public.json",
+          mimeType: "application/json",
+          dialogTitle: "Save Backup",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create backup.");
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView
@@ -209,6 +253,25 @@ export default function ProfileScreen() {
           >
             <Text style={[styles.actionText, { color: theme.text }]}>
               Log Out
+            </Text>
+          </TouchableOpacity>
+
+          <View
+            style={[styles.divider, { backgroundColor: theme.cardBorder }]}
+          />
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.tint }]}
+            onPress={handleBackup}
+          >
+            <Ionicons
+              name="cloud-download-outline"
+              size={20}
+              color="#fff"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={[styles.actionText, { color: "#fff" }]}>
+              Backup Data (JSON)
             </Text>
           </TouchableOpacity>
 
@@ -302,6 +365,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     marginBottom: 24,
+    flexDirection: "row",
+    justifyContent: "center",
   },
   actionText: { fontWeight: "700", fontSize: 16 },
   divider: { height: 1, width: "100%", marginBottom: 24 },

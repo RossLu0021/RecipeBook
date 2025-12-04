@@ -1,36 +1,35 @@
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  Image,
-} from "react-native";
-import { useState, useEffect } from "react";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Sharing from "expo-sharing";
+import { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import IngredientEditor from "@/components/ui/IngredientEditor";
 import StepEditor from "@/components/ui/StepEditor";
 import { supabase } from "@/supabase/client";
-import { IngredientInput, RecipeStepInput } from "@/types/recipe";
 
 // Logic and Components
-import { fetchRecipeData, saveRecipeToDb } from "./create/logic";
 import {
-  PropertyRow,
   MacroInput,
-  SelectionModal,
   MenuModal,
-} from "./create/components";
+  PropertyRow,
+  SelectionModal,
+} from "./create/_components";
+import { useRecipeForm } from "./create/_useRecipeForm";
 
 const CUISINES = [
   "American",
@@ -53,81 +52,39 @@ export default function CreateRecipeScreen() {
   const theme = Colors[scheme];
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const isEditing = !!id;
+  const {
+    loading,
+    coverImage,
+    setCoverImage,
+    title,
+    setTitle,
+    isFavorite,
+    setIsFavorite,
+    mealType,
+    setMealType,
+    cuisine,
+    setCuisine,
+    mastery,
+    setMastery,
+    cookTime,
+    setCookTime,
+    macros,
+    setMacros,
+    ingredients,
+    setIngredients,
+    steps,
+    setSteps,
+    handleSave,
+    isEditing,
+  } = useRecipeForm(id);
 
-  const [loading, setLoading] = useState(false);
   const [selectionModalVisible, setSelectionModalVisible] = useState(false);
   const [menuModalVisible, setMenuModalVisible] = useState(false);
   const [modalType, setModalType] = useState<
     "cuisine" | "meal" | "mastery" | null
   >(null);
 
-  // State
-  const [coverImage, setCoverImage] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [mealType, setMealType] = useState("Dinner");
-  const [cuisine, setCuisine] = useState("American");
-  const [mastery, setMastery] = useState("Learning");
-  const [cookTime, setCookTime] = useState("");
-  const [macros, setMacros] = useState({
-    calories: "",
-    protein: "",
-    carbs: "",
-    fats: "",
-  });
-  const [ingredients, setIngredients] = useState<IngredientInput[]>([]);
-  const [steps, setSteps] = useState<RecipeStepInput[]>([]);
-
-  useEffect(() => {
-    if (isEditing && id) loadExistingRecipe(id as string);
-  }, [id, isEditing]);
-
-  async function loadExistingRecipe(recipeId: string) {
-    setLoading(true);
-    try {
-      const data = await fetchRecipeData(recipeId);
-      if (data) {
-        setTitle(data.title);
-        setMealType(data.meal_type || "Dinner");
-        setCuisine(data.cuisine || "American");
-        setMastery(data.mastery || "Learning");
-        setCookTime(data.cook_time?.toString() || "");
-        setIsFavorite(data.is_favorite || false);
-        setMacros({
-          calories: data.calories?.toString() || "",
-          protein: data.protein?.toString() || "",
-          carbs: data.carbs?.toString() || "",
-          fats: data.fats?.toString() || "",
-        });
-        if (data.recipe_photos?.[0])
-          setCoverImage(data.recipe_photos[0].photo_url);
-        if (data.recipe_ingredients) {
-          setIngredients(
-            data.recipe_ingredients.map((ing: any) => ({
-              id: ing.id,
-              name: ing.name,
-              quantity: ing.quantity?.toString() || "",
-              unit: ing.unit,
-              category: ing.category || "Other",
-            })),
-          );
-        }
-        if (data.recipe_steps) {
-          const sorted = data.recipe_steps.sort(
-            (a: any, b: any) => a.step_number - b.step_number,
-          );
-          setSteps(sorted.map((s: any) => ({ id: s.id, text: s.instruction })));
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function pickImage() {
+  const pickImage = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
@@ -135,9 +92,9 @@ export default function CreateRecipeScreen() {
       quality: 0.7,
     });
     if (!result.canceled) setCoverImage(result.assets[0].uri);
-  }
+  }, [setCoverImage]);
 
-  async function handleShare() {
+  const handleShare = useCallback(async () => {
     setMenuModalVisible(false);
     if (!isEditing)
       return Alert.alert(
@@ -148,9 +105,9 @@ export default function CreateRecipeScreen() {
       await Sharing.shareAsync(coverImage || "", {
         dialogTitle: `Check out my recipe: ${title}`,
       });
-  }
+  }, [isEditing, coverImage, title]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     setMenuModalVisible(false);
     if (!isEditing) return;
     Alert.alert("Delete Recipe", "Are you sure?", [
@@ -164,58 +121,28 @@ export default function CreateRecipeScreen() {
         },
       },
     ]);
-  }
+  }, [isEditing, id, router]);
 
-  async function handleSave() {
-    if (!title.trim())
-      return Alert.alert("Missing Title", "Please enter a recipe title.");
-    setLoading(true);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) return;
-      await saveRecipeToDb({
-        isEditing,
-        id,
-        userData,
-        coverImage,
-        ingredients,
-        steps,
-        recipePayload: {
-          user_id: userData.user.id,
-          title,
-          meal_type: mealType,
-          cuisine,
-          mastery,
-          cook_time: Number(cookTime) || 0,
-          calories: Number(macros.calories) || 0,
-          protein: Number(macros.protein) || 0,
-          carbs: Number(macros.carbs) || 0,
-          fats: Number(macros.fats) || 0,
-        },
-      });
-      router.replace("/");
-    } catch (error: any) {
-      Alert.alert("Error", error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const openModal = (type: "cuisine" | "meal" | "mastery") => {
+  const openModal = useCallback((type: "cuisine" | "meal" | "mastery") => {
     setModalType(type);
     setSelectionModalVisible(true);
-  };
-  const handleSelection = (val: string) => {
-    if (modalType === "cuisine") setCuisine(val);
-    if (modalType === "meal") setMealType(val);
-    if (modalType === "mastery") setMastery(val);
-    setSelectionModalVisible(false);
-  };
-  const getCurrentSelection = () => {
+  }, []);
+
+  const handleSelection = useCallback(
+    (val: string) => {
+      if (modalType === "cuisine") setCuisine(val);
+      if (modalType === "meal") setMealType(val);
+      if (modalType === "mastery") setMastery(val);
+      setSelectionModalVisible(false);
+    },
+    [modalType, setCuisine, setMealType, setMastery],
+  );
+
+  const getCurrentSelection = useCallback(() => {
     if (modalType === "cuisine") return cuisine;
     if (modalType === "meal") return mealType;
     return mastery;
-  };
+  }, [modalType, cuisine, mealType, mastery]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -270,6 +197,8 @@ export default function CreateRecipeScreen() {
             onChangeText={setTitle}
             multiline
             style={[styles.titleInput, { color: theme.text }]}
+            accessibilityLabel="Recipe Title"
+            accessibilityHint="Enter the name of your recipe"
           />
 
           <View style={styles.mb24}>
@@ -302,7 +231,9 @@ export default function CreateRecipeScreen() {
                   color={theme.mutedText}
                   style={styles.mr8}
                 />
-                <Text style={{ color: theme.mutedText, fontSize: 15 }}>
+                <Text
+                  style={[styles.cookTimeLabel, { color: theme.mutedText }]}
+                >
                   Cook Time (min)
                 </Text>
               </View>
@@ -313,6 +244,8 @@ export default function CreateRecipeScreen() {
                 placeholderTextColor={theme.mutedText}
                 keyboardType="numeric"
                 style={[styles.cookTimeInput, { color: theme.text }]}
+                accessibilityLabel="Cook Time"
+                accessibilityHint="Enter cooking time in minutes"
               />
             </View>
             <PropertyRow
@@ -385,6 +318,9 @@ export default function CreateRecipeScreen() {
             style={[styles.saveButton, { backgroundColor: theme.tint }]}
             onPress={handleSave}
             disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Save Recipe"
+            accessibilityState={{ disabled: loading }}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
@@ -490,4 +426,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveBtnText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  cookTimeLabel: { fontSize: 15 },
 });

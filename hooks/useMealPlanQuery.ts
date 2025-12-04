@@ -1,6 +1,6 @@
-import { Alert } from "react-native";
 import { supabase } from "@/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert } from "react-native";
 
 export interface MealPlanItem {
   id: string;
@@ -28,11 +28,11 @@ export function useMealPlanQuery(selectedDay: string) {
       return (data ?? []) as MealPlanItem[];
     },
 
-    // ✅ v5 replacement for keepPreviousData
-    placeholderData: (prev) => prev,
+    // v5 replacement for keepPreviousData
+    placeholderData: (previousData: any) => previousData,
   });
 
-  // ✅ data is now correctly inferred as MealPlanItem[] | undefined
+  // data is now correctly inferred as MealPlanItem[] | undefined
   const meals: MealPlanItem[] = data ?? [];
 
   const deleteMutation = useMutation({

@@ -1,7 +1,7 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
-import * as ImagePicker from "expo-image-picker"; // Ensure this is installed: npx expo install expo-image-picker
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import * as ImagePicker from "expo-image-picker"; // Ensure this is installed: npx expo install expo-image-picker
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ImagePickerCard({
   images,
@@ -30,7 +30,7 @@ export default function ImagePickerCard({
   }
 
   return (
-    <View style={{ marginBottom: 20 }}>
+    <View style={styles.container}>
       <Text style={[styles.label, { color: theme.mutedText }]}>Images</Text>
       <View style={styles.row}>
         {/* Existing Images */}
@@ -51,7 +51,7 @@ export default function ImagePickerCard({
           onPress={pickImage}
           style={[styles.addButton, { borderColor: theme.cardBorder }]}
         >
-          <Text style={{ color: theme.tint, fontSize: 30 }}>＋</Text>
+          <Text style={[styles.plusText, { color: theme.tint }]}>＋</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -106,4 +106,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  container: { marginBottom: 20 },
+  plusText: { fontSize: 30 },
 });

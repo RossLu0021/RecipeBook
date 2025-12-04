@@ -1,24 +1,36 @@
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useSession } from "@/hooks/useSession";
+import {
+  Inter_400Regular,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  useFonts,
+} from "@expo-google-fonts/inter";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import {
   Slot,
   usePathname,
-  useRouter,
   useRootNavigationState,
+  useRouter,
 } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import "react-native-reanimated";
+import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useSession } from "@/hooks/useSession";
-import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import "react-native-reanimated";
+
+SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +53,19 @@ export default function RootLayout() {
   const rootNavigationState = useRootNavigationState();
   const inAuth = pathname?.startsWith("/auth");
 
+  const [loaded, error] = useFonts({
+    Inter_400Regular,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
+
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded, error]);
+
   useEffect(() => {
     // Wait for navigation to be ready and route users based on session state.
     if (!rootNavigationState?.key) return;
@@ -61,19 +86,30 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, [session, inAuth, rootNavigationState?.key, router]);
 
+  if (!loaded && !error) {
+    return null;
+  }
+
   return (
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{ persister: asyncStoragePersister }}
     >
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <Slot />
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </GestureHandlerRootView>
+      <ErrorBoundary>
+        <GestureHandlerRootView style={styles.container}>
+          <ThemeProvider
+            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+          >
+            <Slot />
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </GestureHandlerRootView>
+      </ErrorBoundary>
     </PersistQueryClientProvider>
   );
 }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

@@ -1,33 +1,35 @@
+import { Colors, Typography } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { supabase } from "@/supabase/client";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { router, useLocalSearchParams } from "expo-router";
+import * as Sharing from "expo-sharing";
+import { useCallback, useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
+  FlatList,
   Modal,
   Pressable,
-  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useLocalSearchParams, router } from "expo-router";
-import * as Sharing from "expo-sharing";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/supabase/client";
 
 // Import extracted logic and components
-import { processGroceryMerge } from "./logic";
+import UnitConverter from "@/components/UnitConverter";
+import { generateRecipePDF } from "@/utils/pdfGenerator";
 import {
-  PropertyRow,
-  MacroSummary,
   IngredientList,
   InstructionList,
-} from "./components";
+  MacroSummary,
+  PropertyRow,
+} from "./_components";
+import { processGroceryMerge } from "./_logic";
 
 const DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -41,6 +43,7 @@ export default function RecipeDetailScreen() {
   const [isOwner, setIsOwner] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [planModalVisible, setPlanModalVisible] = useState(false);
+  const [converterVisible, setConverterVisible] = useState(false);
   const [addingToPlan, setAddingToPlan] = useState(false);
 
   const loadRecipe = useCallback(async () => {
@@ -149,10 +152,18 @@ export default function RecipeDetailScreen() {
   };
 
   const shareRecipe = async () => {
-    if (recipe?.image && (await Sharing.isAvailableAsync())) {
-      await Sharing.shareAsync(recipe.image, {
-        dialogTitle: `Check out this recipe: ${recipe.title}`,
-      });
+    if (!recipe) return;
+    try {
+      const pdfUri = await generateRecipePDF(recipe);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(pdfUri, {
+          UTI: ".pdf",
+          mimeType: "application/pdf",
+          dialogTitle: `Share ${recipe.title}`,
+        });
+      }
+    } catch (error) {
+      Alert.alert("Error", "Could not generate PDF.");
     }
   };
 
@@ -167,7 +178,7 @@ export default function RecipeDetailScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <SafeAreaView
         style={styles.floatingHeader}
         edges={["top", "left", "right"]}
@@ -180,6 +191,12 @@ export default function RecipeDetailScreen() {
             <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
           <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.glassButton}
+              onPress={() => setConverterVisible(true)}
+            >
+              <Ionicons name="calculator-outline" size={22} color="#fff" />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.glassButton} onPress={shareRecipe}>
               <Ionicons name="share-outline" size={22} color="#fff" />
             </TouchableOpacity>
@@ -194,6 +211,11 @@ export default function RecipeDetailScreen() {
           </View>
         </View>
       </SafeAreaView>
+
+      <UnitConverter
+        visible={converterVisible}
+        onClose={() => setConverterVisible(false)}
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -281,27 +303,57 @@ export default function RecipeDetailScreen() {
           />
 
           <Text
-            style={[styles.sectionTitle, { color: theme.text, marginTop: 24 }]}
+            style={[styles.sectionTitle, styles.mt24, { color: theme.text }]}
           >
             Instructions
           </Text>
           <InstructionList steps={recipe.recipe_steps} theme={theme} />
 
           <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: theme.tint }]}
+            style={[
+              styles.actionButton,
+              { backgroundColor: theme.tint, marginBottom: 16 },
+            ]}
+            onPress={() => router.push(`/recipes/${id}/cook`)}
+            accessibilityRole="button"
+            accessibilityLabel="Start Cooking Mode"
+            accessibilityHint="Opens a step-by-step cooking view"
+          >
+            <Ionicons
+              name="play-circle-outline"
+              size={24}
+              color="#fff"
+              style={styles.mr8}
+            />
+            <Text style={styles.actionButtonText}>Start Cooking</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.card }]}
             onPress={() => setPlanModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Add to Meal Plan"
+            accessibilityHint="Opens a modal to select a day to add this recipe to"
           >
             <Ionicons
               name="calendar-outline"
               size={20}
-              color="#fff"
+              color={theme.text}
               style={styles.mr8}
             />
-            <Text style={styles.actionButtonText}>Add to Meal Plan</Text>
+            <Text style={[styles.actionButtonText, { color: theme.text }]}>
+              Add to Meal Plan
+            </Text>
           </TouchableOpacity>
 
           {isOwner && (
-            <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={handleDelete}
+              accessibilityRole="button"
+              accessibilityLabel="Delete Recipe"
+              accessibilityHint="Permanently deletes this recipe"
+            >
               <Text style={styles.deleteText}>Delete Recipe</Text>
             </TouchableOpacity>
           )}
@@ -352,6 +404,7 @@ export default function RecipeDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   floatingHeader: {
     position: "absolute",
@@ -380,11 +433,19 @@ const styles = StyleSheet.create({
   placeholder: { justifyContent: "center", alignItems: "center" },
   scrollContent: { paddingBottom: 120 },
   content: { paddingHorizontal: 20, paddingTop: 24 },
-  title: { fontSize: 32, fontWeight: "800", marginBottom: 24, lineHeight: 38 },
+  title: {
+    ...Typography.heading,
+    marginBottom: 24,
+    lineHeight: 38,
+  },
   divider: { height: 1, width: "100%", marginVertical: 20 },
   mb16: { marginBottom: 16 },
   mb24: { marginBottom: 24 },
-  sectionTitle: { fontSize: 20, fontWeight: "700", marginBottom: 12 },
+  mt24: { marginTop: 24 },
+  sectionTitle: {
+    ...Typography.subtitle,
+    marginBottom: 12,
+  },
   actionButton: {
     marginTop: 40,
     flexDirection: "row",
@@ -398,10 +459,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  actionButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  actionButtonText: {
+    ...Typography.body,
+    color: "#fff",
+    fontWeight: "700",
+  },
   mr8: { marginRight: 8 },
   deleteBtn: { marginTop: 16, alignItems: "center" },
-  deleteText: { color: "#ef4444", fontSize: 15 },
+  deleteText: {
+    ...Typography.body,
+    color: "#ef4444",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -409,7 +477,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: { width: "85%", borderRadius: 16, padding: 24 },
-  modalHeader: { fontSize: 20, fontWeight: "700", marginBottom: 8 },
+  modalHeader: {
+    ...Typography.subtitle,
+    marginBottom: 8,
+  },
   modalGrid: { justifyContent: "space-between", gap: 10 },
   p20: { padding: 20 },
   dayButton: {
@@ -420,5 +491,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  dayText: { fontWeight: "600" },
+  dayText: {
+    ...Typography.body,
+    fontWeight: "600",
+  },
 });

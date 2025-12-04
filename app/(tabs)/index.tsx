@@ -1,22 +1,23 @@
+import { Ionicons } from "@expo/vector-icons";
+import { Stack, router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
-  View,
+  ActivityIndicator,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
   Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useEffect, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, router, useFocusEffect } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 
-import type { Recipe } from "@/types/recipe";
 import RecipeCard from "@/components/recipe/recipeCard";
-import { supabase } from "@/supabase/client";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import usePantry from "@/hooks/usePantry";
+import { supabase } from "@/supabase/client";
+import type { Recipe } from "@/types/recipe";
 
 export default function RecipesScreen() {
   const scheme = useColorScheme() ?? "light";
@@ -27,6 +28,9 @@ export default function RecipesScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const { pantryList } = usePantry();
+  const [showPantryMatch, setShowPantryMatch] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       // Adding 'void' fixes the "Promise returned is ignored" warning
@@ -34,34 +38,60 @@ export default function RecipesScreen() {
     }, []),
   );
 
-  // Filter logic whenever search query or recipes change
+  // Filter logic whenever search query, recipes, or pantry toggle changes
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredRecipes(recipes);
-    } else {
+    let filtered = recipes;
+
+    // 1. Filter by Search Query
+    if (searchQuery.trim() !== "") {
       const lowerQuery = searchQuery.toLowerCase();
-      const filtered = recipes.filter(
+      filtered = filtered.filter(
         (recipe) =>
           recipe.title.toLowerCase().includes(lowerQuery) ||
           recipe.meal_type?.toLowerCase().includes(lowerQuery) ||
           recipe.cuisine?.toLowerCase().includes(lowerQuery),
       );
-      setFilteredRecipes(filtered);
     }
-  }, [searchQuery, recipes]);
+
+    // 2. Filter by Pantry Match
+    if (showPantryMatch) {
+      filtered = filtered.filter((recipe) => {
+        if (!recipe.ingredients || recipe.ingredients.length === 0)
+          return false;
+
+        const totalIngredients = recipe.ingredients.length;
+        let matchedCount = 0;
+
+        recipe.ingredients.forEach((ing: any) => {
+          // Simple fuzzy match: check if pantry item name contains ingredient name or vice versa
+          const match = pantryList.some(
+            (pItem) =>
+              pItem.name.toLowerCase().includes(ing.name.toLowerCase()) ||
+              ing.name.toLowerCase().includes(pItem.name.toLowerCase()),
+          );
+          if (match) matchedCount++;
+        });
+
+        // Show if > 50% of ingredients are in pantry
+        return matchedCount / totalIngredients >= 0.5;
+      });
+    }
+
+    setFilteredRecipes(filtered);
+  }, [searchQuery, recipes, showPantryMatch, pantryList]);
 
   async function loadRecipes() {
     setLoading(true);
     const { data, error } = await supabase
       .from("recipes")
-      .select("*, photos:recipe_photos(photo_url)")
+      .select("*, photos:recipe_photos(photo_url), ingredients:recipe_ingredients(*)") // Fetch ingredients for matching
       .order("created_at", { ascending: false });
 
     if (error) {
       console.warn("Failed to load recipes:", error.message);
     } else {
       setRecipes(data as Recipe[]);
-      setFilteredRecipes(data as Recipe[]); // Initialize filtered list
+      // Initial filter will run via useEffect
     }
     setLoading(false);
   }
@@ -215,5 +245,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
     elevation: 8,
+  },
+  filterToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 16,
+    alignSelf: "flex-start",
+    gap: 8,
+  },
+  filterText: {
+    fontWeight: "600",
+    fontSize: 14,
   },
 });
